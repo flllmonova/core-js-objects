@@ -17,8 +17,12 @@
  *    shallowCopy({a: 2, b: { a: [1, 2, 3]}}) => {a: 2, b: { a: [1, 2, 3]}}
  *    shallowCopy({}) => {}
  */
-function shallowCopy(/* obj */) {
-  throw new Error('Not implemented');
+function shallowCopy(obj) {
+  if (obj === null || obj === undefined) {
+    return {};
+  }
+
+  return Object.assign({}, obj);
 }
 
 /**
@@ -32,8 +36,26 @@ function shallowCopy(/* obj */) {
  *    mergeObjects([{a: 1, b: 2}, {b: 3, c: 5}]) => {a: 1, b: 5, c: 5}
  *    mergeObjects([]) => {}
  */
-function mergeObjects(/* objects */) {
-  throw new Error('Not implemented');
+function mergeObjects(objects) {
+  if (!Array.isArray(objects) || objects.length === 0) return {};
+
+  const res = {};
+
+  objects.forEach((obj) => {
+    if (!obj || typeof obj !== 'object') {
+      return;
+    }
+
+    Object.entries(obj).forEach(([key, value]) => {
+      if (Object.prototype.hasOwnProperty.call(res, key)) {
+        res[key] += value;
+      } else {
+        res[key] = value;
+      }
+    });
+  });
+
+  return res;
 }
 
 /**
@@ -49,8 +71,22 @@ function mergeObjects(/* objects */) {
  *    removeProperties({name: 'John', age: 30, city: 'New York'}, ['age']) => {name: 'John', city: 'New York'}
  *
  */
-function removeProperties(/* obj, keys */) {
-  throw new Error('Not implemented');
+function removeProperties(obj, keys) {
+  if (obj === null || obj === undefined) {
+    return {};
+  }
+
+  const result = { ...obj };
+
+  if (!Array.isArray(keys)) {
+    return result;
+  }
+
+  keys.forEach((key) => {
+    delete result[key];
+  });
+
+  return result;
 }
 
 /**
@@ -65,8 +101,30 @@ function removeProperties(/* obj, keys */) {
  *    compareObjects({a: 1, b: 2}, {a: 1, b: 2}) => true
  *    compareObjects({a: 1, b: 2}, {a: 1, b: 3}) => false
  */
-function compareObjects(/* obj1, obj2 */) {
-  throw new Error('Not implemented');
+function compareObjects(obj1, obj2) {
+  if (obj1 === obj2) {
+    return true;
+  }
+
+  if (obj1 === null || obj2 === null) {
+    return false;
+  }
+
+  if (typeof obj1 !== 'object' || typeof obj2 !== 'object') {
+    return false;
+  }
+
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  return keys1.every(
+    (key) =>
+      Object.prototype.hasOwnProperty.call(obj2, key) && obj1[key] === obj2[key]
+  );
 }
 
 /**
@@ -80,8 +138,16 @@ function compareObjects(/* obj1, obj2 */) {
  *    isEmptyObject({}) => true
  *    isEmptyObject({a: 1}) => false
  */
-function isEmptyObject(/* obj */) {
-  throw new Error('Not implemented');
+function isEmptyObject(obj) {
+  if (obj === null || obj === undefined) {
+    return true;
+  }
+
+  if (typeof obj !== 'object') {
+    return true;
+  }
+
+  return Object.keys(obj).length === 0;
 }
 
 /**
@@ -100,8 +166,12 @@ function isEmptyObject(/* obj */) {
  *    immutableObj.newProp = 'new';
  *    console.log(immutableObj) => {a: 1, b: 2}
  */
-function makeImmutable(/* obj */) {
-  throw new Error('Not implemented');
+function makeImmutable(obj) {
+  if (obj && typeof obj === 'object') {
+    Object.freeze(obj);
+  }
+
+  return obj;
 }
 
 /**
@@ -114,8 +184,38 @@ function makeImmutable(/* obj */) {
  *    makeWord({ a: [0, 1], b: [2, 3], c: [4, 5] }) => 'aabbcc'
  *    makeWord({ H:[0], e: [1], l: [2, 3, 8], o: [4, 6], W:[5], r:[7], d:[9]}) => 'HelloWorld'
  */
-function makeWord(/* lettersObject */) {
-  throw new Error('Not implemented');
+function makeWord(lettersObject) {
+  if (!lettersObject || typeof lettersObject !== 'object') {
+    return '';
+  }
+
+  const entries = Object.entries(lettersObject);
+
+  if (entries.length === 0) {
+    return '';
+  }
+
+  const maxIndex = entries.reduce((max, [, positions]) => {
+    const highest = positions.reduce((highestValue, position) => {
+      if (position > highestValue) {
+        return position;
+      }
+
+      return highestValue;
+    }, max);
+
+    return highest;
+  }, -1);
+
+  const result = new Array(maxIndex + 1).fill('');
+
+  entries.forEach(([letter, positions]) => {
+    positions.forEach((position) => {
+      result[position] = letter;
+    });
+  });
+
+  return result.join('');
 }
 
 /**
@@ -132,8 +232,47 @@ function makeWord(/* lettersObject */) {
  *    sellTickets([25, 25, 50]) => true
  *    sellTickets([25, 100]) => false (The seller does not have enough money to give change.)
  */
-function sellTickets(/* queue */) {
-  throw new Error('Not implemented');
+function sellTickets(queue) {
+  const change = {
+    25: 0,
+    50: 0,
+  };
+
+  for (const bill of queue) {
+    if (bill === 25) {
+      change[25] += 1;
+      continue;
+    }
+
+    if (bill === 50) {
+      if (change[25] === 0) {
+        return false;
+      }
+
+      change[25] -= 1;
+      change[50] += 1;
+      continue;
+    }
+
+    if (bill === 100) {
+      if (change[50] > 0 && change[25] > 0) {
+        change[50] -= 1;
+        change[25] -= 1;
+        continue;
+      }
+
+      if (change[25] >= 3) {
+        change[25] -= 3;
+        continue;
+      }
+
+      return false;
+    }
+
+    return false;
+  }
+
+  return true;
 }
 
 /**
@@ -149,9 +288,14 @@ function sellTickets(/* queue */) {
  *    console.log(r.height);      // => 20
  *    console.log(r.getArea());   // => 200
  */
-function Rectangle(/* width, height */) {
-  throw new Error('Not implemented');
+function Rectangle(width, height) {
+  this.width = width;
+  this.height = height;
 }
+
+Rectangle.prototype.getArea = function getArea() {
+  return this.width * this.height;
+};
 
 /**
  * Returns the JSON representation of specified object
@@ -163,8 +307,8 @@ function Rectangle(/* width, height */) {
  *    [1,2,3]   =>  '[1,2,3]'
  *    { height: 10, width: 20 } => '{"height":10,"width":20}'
  */
-function getJSON(/* obj */) {
-  throw new Error('Not implemented');
+function getJSON(obj) {
+  return JSON.stringify(obj);
 }
 
 /**
@@ -178,8 +322,13 @@ function getJSON(/* obj */) {
  *    const r = fromJSON(Circle.prototype, '{"radius":10}');
  *
  */
-function fromJSON(/* proto, json */) {
-  throw new Error('Not implemented');
+function fromJSON(proto, json) {
+  const result = Object.create(proto || Object.prototype);
+  const parsed = JSON.parse(json);
+
+  Object.assign(result, parsed);
+
+  return result;
 }
 
 /**
@@ -213,8 +362,16 @@ function fromJSON(/* proto, json */) {
  *      { country: 'Russia',  city: 'Saint Petersburg' }
  *    ]
  */
-function sortCitiesArray(/* arr */) {
-  throw new Error('Not implemented');
+function sortCitiesArray(arr) {
+  return [...arr].sort((a, b) => {
+    const countryCompare = String(a.country).localeCompare(String(b.country));
+
+    if (countryCompare !== 0) {
+      return countryCompare;
+    }
+
+    return String(a.city).localeCompare(String(b.city));
+  });
 }
 
 /**
@@ -252,8 +409,21 @@ function sortCitiesArray(/* arr */) {
  *    "Poland" => ["Lodz"]
  *   }
  */
-function group(/* array, keySelector, valueSelector */) {
-  throw new Error('Not implemented');
+function group(array, keySelector, valueSelector) {
+  const result = new Map();
+
+  array.forEach((item) => {
+    const key = keySelector(item);
+    const value = valueSelector(item);
+
+    if (!result.has(key)) {
+      result.set(key, []);
+    }
+
+    result.get(key).push(value);
+  });
+
+  return result;
 }
 
 /**
@@ -310,33 +480,199 @@ function group(/* array, keySelector, valueSelector */) {
  *  For more examples see unit tests.
  */
 
+class Selector {
+  constructor({
+    element = '',
+    id = '',
+    classes = [],
+    attrs = [],
+    pseudoClasses = [],
+    pseudoElements = [],
+  } = {}) {
+    this.element = element;
+    this.id = id;
+    this.classes = [...classes];
+    this.attrs = [...attrs];
+    this.pseudoClasses = [...pseudoClasses];
+    this.pseudoElements = [...pseudoElements];
+  }
+
+  validateAdd(type) {
+    const order = {
+      element: 0,
+      id: 1,
+      class: 2,
+      attr: 3,
+      pseudoClass: 4,
+      pseudoElement: 5,
+    };
+
+    const currentOrder = order[type];
+    const hasLaterParts = [
+      ['element', this.element !== ''],
+      ['id', this.id !== ''],
+      ['class', this.classes.length > 0],
+      ['attr', this.attrs.length > 0],
+      ['pseudoClass', this.pseudoClasses.length > 0],
+      ['pseudoElement', this.pseudoElements.length > 0],
+    ].some(([part, exists]) => exists && order[part] > currentOrder);
+
+    if (hasLaterParts) {
+      throw new Error(
+        'Selector parts should be arranged in the following order: element, id, class, attribute, pseudo-class, pseudo-element'
+      );
+    }
+
+    if (
+      (type === 'element' && this.element !== '') ||
+      (type === 'id' && this.id !== '') ||
+      (type === 'pseudoElement' && this.pseudoElements.length > 0)
+    ) {
+      throw new Error(
+        'Element, id and pseudo-element should not occur more than one time inside the selector'
+      );
+    }
+  }
+
+  withPart(type, value) {
+    this.validateAdd(type);
+
+    const next = new Selector({
+      element: this.element,
+      id: this.id,
+      classes: [...this.classes],
+      attrs: [...this.attrs],
+      pseudoClasses: [...this.pseudoClasses],
+      pseudoElements: [...this.pseudoElements],
+    });
+
+    if (type === 'element') {
+      next.element = value;
+    }
+
+    if (type === 'id') {
+      next.id = value;
+    }
+
+    if (type === 'class') {
+      next.classes.push(value);
+    }
+
+    if (type === 'attr') {
+      next.attrs.push(value);
+    }
+
+    if (type === 'pseudoClass') {
+      next.pseudoClasses.push(value);
+    }
+
+    if (type === 'pseudoElement') {
+      next.pseudoElements.push(value);
+    }
+
+    return next;
+  }
+
+  element(value) {
+    return this.withPart('element', value);
+  }
+
+  id(value) {
+    return this.withPart('id', value);
+  }
+
+  class(value) {
+    return this.withPart('class', value);
+  }
+
+  attr(value) {
+    return this.withPart('attr', value);
+  }
+
+  pseudoClass(value) {
+    return this.withPart('pseudoClass', value);
+  }
+
+  pseudoElement(value) {
+    return this.withPart('pseudoElement', value);
+  }
+
+  combine(selector, combinator) {
+    return new CombinedSelector(this, combinator, selector);
+  }
+
+  stringify() {
+    const result = [];
+
+    if (this.element) {
+      result.push(this.element);
+    }
+
+    if (this.id) {
+      result.push(`#${this.id}`);
+    }
+
+    this.classes.forEach((className) => {
+      result.push(`.${className}`);
+    });
+
+    this.attrs.forEach((attr) => {
+      result.push(`[${attr}]`);
+    });
+
+    this.pseudoClasses.forEach((pseudoClass) => {
+      result.push(`:${pseudoClass}`);
+    });
+
+    this.pseudoElements.forEach((pseudoElement) => {
+      result.push(`::${pseudoElement}`);
+    });
+
+    return result.join('');
+  }
+}
+
+class CombinedSelector {
+  constructor(selector1, combinator, selector2) {
+    this.selector1 = selector1;
+    this.selector2 = selector2;
+    this.combinator = combinator;
+  }
+
+  stringify() {
+    const separator = this.combinator === ' ' ? '   ' : ` ${this.combinator} `;
+
+    return `${this.selector1.stringify()}${separator}${this.selector2.stringify()}`;
+  }
+}
+
 const cssSelectorBuilder = {
-  element(/* value */) {
-    throw new Error('Not implemented');
+  element(value) {
+    return new Selector().element(value);
   },
 
-  id(/* value */) {
-    throw new Error('Not implemented');
+  id(value) {
+    return new Selector().id(value);
   },
 
-  class(/* value */) {
-    throw new Error('Not implemented');
+  class(value) {
+    return new Selector().class(value);
   },
 
-  attr(/* value */) {
-    throw new Error('Not implemented');
+  attr(value) {
+    return new Selector().attr(value);
   },
 
-  pseudoClass(/* value */) {
-    throw new Error('Not implemented');
+  pseudoClass(value) {
+    return new Selector().pseudoClass(value);
   },
 
-  pseudoElement(/* value */) {
-    throw new Error('Not implemented');
+  pseudoElement(value) {
+    return new Selector().pseudoElement(value);
   },
 
-  combine(/* selector1, combinator, selector2 */) {
-    throw new Error('Not implemented');
+  combine(selector1, combinator, selector2) {
+    return new CombinedSelector(selector1, combinator, selector2);
   },
 };
 
